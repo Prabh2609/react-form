@@ -19,12 +19,10 @@ const Button = styled.button`
         background-color:#4b60e5;
     }
 `
-interface Props{
-    Type?:string;
-}
 
-export const  ActionButton:React.FC<Props>=({Type}):JSX.Element=> {
+
+export const  ActionButton:React.FC=():JSX.Element=> {
   return (
-      <Button >Submit Application</Button>
+      <Button type='submit'>Submit Application</Button>
   )
 }

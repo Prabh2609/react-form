@@ -4,17 +4,17 @@ import logo from '../assets/logo.png'
 
 const Nav = styled.header`
     width:100%;
-    height:15vh;
+    height:10vh;
     box-sizing:border-box;
     position:fixed;
     top:0px;
-    padding-left:15%;
+    padding-left:25%;
     text-align:left;
     z-index:1000;
     background-color:white;
 `
 const Logo = styled.img`
-    height:80%;
+    height:100%;
     width:auto;
 `
 export default function Header() {

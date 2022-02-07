@@ -2,12 +2,13 @@ import React from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`
-    width:70%;
-    height:fint-content;
+    width:50%;
+    height:fit-content;
     font-family: 'Lato', sans-serif;
     line-height:1.4;
     text-align:left;
     padding:50px;
+    padding-bottom:12px;
     margin-top:25px;
     margin-left:auto;
     margin-right:auto;
