@@ -163,11 +163,11 @@ export const FormComponent:React.FC<Props> = ({type,label,style,placeholder,regi
                 setResumeError('Only pdf format is supported')
             else{
                 setResumeError('null')
-                setResumeLabel(e.currentTarget.files[0].name)
             }
+            setResumeLabel(e.currentTarget.files[0].name)
+        }else{
+            setResumeError('This File is required')
         }
-        
-        // e.currentTarget.files?setResumeLabel(e.currentTarget.files[0].name):setResumeLabel(resumeLabel)
     }
     return( 
         
@@ -181,15 +181,13 @@ export const FormComponent:React.FC<Props> = ({type,label,style,placeholder,regi
                 <Column>
                     <FileUploadWrapper>
                         <UploadButton disabled><Icon className='fas fa-paperclip'/>{resumeLabel}</UploadButton>
-                        <ResumeInput onInput={(e)=>onInputChange(e)} type='file' accept='application/pdf'  {...register?{...register("Resume",{required:true})}:null} />
+                        <ResumeInput onInput={(e)=>onInputChange(e)} type='file' accept='application/pdf'  {...register?{...register('Resume')}:null} />
                         
                     </FileUploadWrapper>
                         {
                             resumeError != 'null' && <Error>{resumeError}</Error>
                         }
-                        {
-                            error?.Resume?.type === 'required' && <Error>This  is a required field</Error>
-                        } 
+                        
                 </Column>
                 :
                 <Column>         
