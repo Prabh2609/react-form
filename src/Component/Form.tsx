@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
-import { ActionButton } from './ActionButton';
 import { FormComponent } from './FormComponent';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { addDoc, collection, doc, documentId, setDoc } from 'firebase/firestore';
+import { db, storage } from '../Utils/Firebase';
+import { deleteObject, getDownloadURL, ref, uploadBytes, uploadBytesResumable } from 'firebase/storage';
+import { UUID } from 'uuid-generator-ts';
 
 
 const Row = styled.div`
@@ -14,6 +18,26 @@ const Row = styled.div`
     margin-bottom:16px;
     box-sizing:border-box;
 `
+
+const Button = styled.button`
+    background-color:#4f65f1;
+    border-color:#4b60e5;
+    color:white;
+    font:normal 700 14px/1.4 Lato;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    line-height:1.3;
+    padding:10px 15px;
+    text-align:center;
+    border:1px solid #dcdcdc;
+    cursor:pointer;
+    outline:none;
+    border-radius:3px;
+    &:hover{
+        background-color:#4b60e5;
+    }
+`
+
 const Column = styled.div`
     width:70%;
 `
@@ -44,6 +68,10 @@ const FormContainer = styled.form`
     width:50%;
     margin-left:auto;
     margin-right:auto;
+    box-sizing:border-box;
+    @media (max-width:768px){
+        width:90%;
+    }
 `
 const Heading = styled.h4`
     color:#515357;
@@ -66,13 +94,12 @@ const Description = styled.p`
     text-align:left;
 
 `
-const FlexContainer = styled.div`
-    display:flex;
-    background-color:red;
-`
-const Input = styled.input`
-line-height:1.8;
-    width:95%;
+
+
+const TextArea = styled.textarea`
+    line-height:1.8;
+    width:-webkit-fill-available;
+    min-height:120px;
     border-radius:3px;
     border-width:1px;
     border-color:#e2e2e2;
@@ -83,21 +110,7 @@ line-height:1.8;
     &:focus{
         outline:none;
         border-color:#7f838a;
-    }`
-const TextArea = styled.textarea`
-line-height:1.8;
-width:100%;
-border-radius:3px;
-border-width:1px;
-border-color:#e2e2e2;
-color:#515357;
-font:normal 400 16px/1.8 Lato;
-border-style:solid;
-padding:4px 4px 4px 15px;
-&:focus{
-    outline:none;
-    border-color:#7f838a;
-}
+    }
 `
 
 const DropDown=styled.select`
@@ -137,24 +150,73 @@ position: absolute;
 top:-12px;
 font:normal 400 12px/1.8 Lato;
 `
+const RecaptchaContainer=styled.div`
+    width:fit-content;
+    margin:32px auto;
+    display:block;
+    height:120px;
+`
 
-const gender=['Select ...' ,'Male','Female','Decline to self identify']
-const race=['Select ...','Hispanic or Latino','White (Not Hispanic or Latino)','Black or African American (Not Hispanic or Latino)','Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)','Asian (Not Hispanic or Latino)','American Indian or Alaska Native (Not Hispanic or Latino)','Two or More Races (Not Hispanic or Latino)']
-const vet=['Select ... ','I am a veteran','I am not a verteran','Decline to self identify']
+const gender=['Male','Female','Decline to self identify']
+const race=['Hispanic or Latino','White (Not Hispanic or Latino)','Black or African American (Not Hispanic or Latino)','Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)','Asian (Not Hispanic or Latino)','American Indian or Alaska Native (Not Hispanic or Latino)','Two or More Races (Not Hispanic or Latino)']
+const vet=['I am a veteran','I am not a verteran','Decline to self identify']
 
-const rowCustomStyle = `flex-direction:column;& div{width:100%;}`
+const rowCustomStyle = `flex-direction:column;& div{width:-webkit-fill-available;}  `
+
+
 
 export const Form=()=> {
 
-    const {register,handleSubmit,watch,formState:{errors}} = useForm();
+    const addData=(data:{[x: string]: any})=>{
 
+        const storageRef=ref(storage,new UUID().getDashFreeUUID())
+        const uploadTask = uploadBytesResumable(storageRef,data.Resume[0])
+        
+        uploadTask.on('state_changed',
+            (snapshot)=>{
+                const progress = (snapshot.bytesTransferred/snapshot.totalBytes)*100;
+                console.log("upload is "+progress+"% done")
+                switch(snapshot.state){
+                    case 'paused':console.log('upload paused')
+                                break;
+                    case 'running':console.log('upload is running')
+                                break
+                        
+                }
+            },
+            (error)=>{
+                console.log('something went wrong')
+                console.log(error)
+            },()=>{
+                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                    data.Resume=downloadURL;
+                    addDoc(collection(db,'candidates'),data)
+                        .then(()=>{
+                            alert('added to database')
+                        }).catch((e)=>{
+                            alert("error"+e)
+                            const deleteRef = ref(storage,downloadURL)
+                            deleteObject(deleteRef)
+                        })
+                    
+                    });
+            }
+        )
+    }
+
+    const {register,handleSubmit,formState:{errors}} = useForm();
+    
+    const [captchaVerify,setCaptchaVerify] = useState(false);
     const [raceDescription,setRaceDescription] = useState(false);
 
   return (
     <Container>
         <FormContainer onSubmit={handleSubmit((data)=>{
-            console.log(data)
+            if(Object.keys(errors).length == 0){                
+                addData(data)
+            }
         })}>
+
             <Heading>Submit your application</Heading>
                 <FormComponent type='file' label='Resume/CV' register={register} error={errors}/>
                 <FormComponent type='text' label='Full Name' register={register} error={errors}/>
@@ -170,7 +232,6 @@ export const Form=()=> {
                 <FormComponent type='url' label='Other website'register={register} error={errors}/>
             <Heading>Preferred Pronouns</Heading>
                 <FormComponent type='text' style={rowCustomStyle} label='If youd like, please share your pronouns with us.' placeholder='Type Your response'/>
-            {/* <Row content='Resume/CV' required={true} inputType='file'   /> */}
             
             <Heading>Additional Information</Heading>
                 <TextArea placeholder='Add a cover letter or anything else you want to share' {...register('TextArea',{minLength:30})}/>
@@ -190,16 +251,18 @@ export const Form=()=> {
                 <Content>Gender</Content>
                 <Column>
                     <DropDown {...register('Gender',{required:true})}>
-                        {gender.map(item=><option>{item}</option>)}
+                        <option value=''>Select ... </option>
+                        {gender.map(item=><option value={item}>{item}</option>)}
                     </DropDown>
-                    {errors?.Gender?.type==='required' && <Error>Select Gender Value</Error>}
+                    {errors?.Gender && <Error>Select Gender Value</Error>}
                 </Column>
             </Row>
             <Row>
                 <Content>Race <Info className='fas fa-info-circle'  onClick={()=>setRaceDescription(!raceDescription)} /> </Content>
                 <Column>
-                    <DropDown {...register('Race',{required:true})}>
-                        {race.map(item=><option>{item}</option>)}
+                    <DropDown {...register('Race')}>
+                        <option value=''>Select ...</option>
+                        {race.map(item=><option value={item}>{item}</option>)}
                     </DropDown>
                     {
                         raceDescription?<List>
@@ -249,17 +312,28 @@ export const Form=()=> {
                 <Content>Veteran Status</Content>
                 <Column>
                     <DropDown {...register('Vet')}>
-                        {vet.map(item=><option>{item}</option>)}
+                        <option value=''>Select ... </option>
+                        {vet.map(item=><option value={item}>{item}</option>)}
                     </DropDown>
                     
                 </Column>
             </Row>
-{/* 
+
+            <RecaptchaContainer>
+                <ReCAPTCHA
+                    sitekey='6LdWHmUeAAAAAPyHlfKyffhTuD8HUy3uZ_cmZkEX'
+                    onChange={()=>setCaptchaVerify(true)}
+                    onErrored={()=>setCaptchaVerify(false)}
+                />
+                {
+                    Object.keys(errors).length>0 && !captchaVerify && <Error>Please Select Captcha</Error>    
+                }
+                
+            </RecaptchaContainer>
             
-            <Row content='Gender' inputType='select' values={gender}/>
-            <Row content='Race' inputType='select' values={race}/>
-            <Row content='Veteran Status' inputType='select' values={vet}/> */}
-            <ActionButton/>
+
+            
+        <Button type='submit'>Submit Application</Button>
         </FormContainer>
     </Container>
   );

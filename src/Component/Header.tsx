@@ -12,10 +12,14 @@ const Nav = styled.header`
     text-align:left;
     z-index:1000;
     background-color:white;
+    @media (max-width:768px){
+        padding-left:0%;
+    }
 `
 const Logo = styled.img`
     height:100%;
     width:auto;
+    margin-left:24px;
 `
 export default function Header() {
   return (

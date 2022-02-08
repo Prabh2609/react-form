@@ -7,11 +7,16 @@ const Container = styled.div`
     font-family: 'Lato', sans-serif;
     line-height:1.4;
     text-align:left;
-    padding:50px;
+    padding:24px;
     padding-bottom:12px;
     margin-top:25px;
     margin-left:auto;
     margin-right:auto;
+    box-sizing:border-box;
+    @media (max-width:768px){
+        width:90%;
+        padding:12px;
+    }
 `
 const Heading = styled.h2`
     font-size:36px;

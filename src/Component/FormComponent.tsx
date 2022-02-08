@@ -26,16 +26,27 @@ const UploadButton = styled.button`
     letter-spacing:2px;
     line-height:1.3;
     padding:8px 15px;
+    width:250px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    height:45px;
     text-transform:uppercase;
 `
 const Icon = styled.i`
     color:#515357;
-    margin-left:13px;
     margin-right:13px;
 `
 
 const Column = styled.div`
     width:70%;
+    display:flex;
+    flex-direction:column;
+    text-align:left;
+    box-sizing:border-box;
+    @media (max-width:768px){
+        width:-webkit-fill-available;
+    }
 `
 const Error = styled.p`
     color:red;
@@ -50,7 +61,7 @@ const Content = styled.p`
     text-align:left;
 `
 const Input = styled.input`
-line-height:1.8;
+    line-height:1.8;
     width:95%;
     border-radius:3px;
     border-width:1px;
@@ -62,7 +73,11 @@ line-height:1.8;
     &:focus{
         outline:none;
         border-color:#7f838a;
-    }`
+    }
+    @media (max-width:768px){
+        width:-webkit-fill-available;
+    }
+`
 const Required = styled.span`
     display: inline-block;
     color: #ff794f;
@@ -71,6 +86,14 @@ const Required = styled.span`
     position: absolute;
     top:-12px;
     font:normal 400 9px/1.8 Lato;
+`
+const ResumeInput=styled.input`
+    width:250px;
+    opacity:0;
+    height:45px;
+    position:absolute;
+    left:0px;
+    cursor:pointer;
 `
 const checkRequired =(label:string):boolean=>{
     switch(label){
@@ -121,15 +144,29 @@ export const FormComponent:React.FC<Props> = ({type,label,style,placeholder,regi
     margin-left:auto;
     margin-right:auto;
     margin-top:16px;
-    margin-bottom:16px;
+    margin-bottom:28px;
     box-sizing:border-box;
     ${style}
+    @media (max-width:768px){
+        flex-direction:column;
+    }
 `   
-    const name = JSON.parse(JSON.stringify(toPascalCase(label)))
+    
     const [resumeLabel,setResumeLabel] = useState('Attach Resume/CV')
+    const [resumeError,setResumeError] = useState('null')
+
     const onInputChange=(e:React.FormEvent<HTMLInputElement>)=>{
-        console.log(e.currentTarget.files?.[0].size);
-        e.currentTarget.files?.[0]?setResumeLabel(e.currentTarget.files[0].name):setResumeLabel(resumeLabel)
+        if(e.currentTarget.files && e.currentTarget.files[0]){
+            if(e.currentTarget.files[0].size > 5*1024*1024)
+                setResumeError('File size should be less than 5MB')
+            else if(e.currentTarget.files[0].type != 'application/pdf')
+                setResumeError('Only pdf format is supported')
+            else{
+                setResumeError('null')
+                setResumeLabel(e.currentTarget.files[0].name)
+            }
+        }
+        
         // e.currentTarget.files?setResumeLabel(e.currentTarget.files[0].name):setResumeLabel(resumeLabel)
     }
     return( 
@@ -143,20 +180,21 @@ export const FormComponent:React.FC<Props> = ({type,label,style,placeholder,regi
                 label==='Resume/CV'?
                 <Column>
                     <FileUploadWrapper>
-                        <UploadButton ><Icon className='fas fa-paperclip'/>{resumeLabel}</UploadButton>
-                        <Input onInput={(e)=>onInputChange(e)} type='file' accept='application/pdf'  {...register?{...register("Resume",{validate:{
-                            
-                                lessThan5MB: files => files[0]?.size < 5000000,
-
-                                   
-                        }})}:null} style={{width:'92%',cursor:'pointer',opacity:0,position:'absolute',top:'-5px',left:'0px'}}/>
-                        {error?.Resume?.type==='lessThan5MB' && <Error>Resume file should be Less than 5MB{console.log(error?.Resume)}</Error>}
-                    </FileUploadWrapper> 
+                        <UploadButton disabled><Icon className='fas fa-paperclip'/>{resumeLabel}</UploadButton>
+                        <ResumeInput onInput={(e)=>onInputChange(e)} type='file' accept='application/pdf'  {...register?{...register("Resume",{required:true})}:null} />
+                        
+                    </FileUploadWrapper>
+                        {
+                            resumeError != 'null' && <Error>{resumeError}</Error>
+                        }
+                        {
+                            error?.Resume?.type === 'required' && <Error>This  is a required field</Error>
+                        } 
                 </Column>
                 :
                 <Column>         
                     <Input { ...register?{...register(toPascalCase(label),getValidation(label))}:null } type={type} placeholder={placeholder} />
-                    {error?error[toPascalCase(label)]?.type === 'required' && <Error>This Field is required{console.log(error)}</Error>:null}
+                    {error?error[toPascalCase(label)]?.type === 'required' && <Error>This Field is required</Error>:null}
                     {error?error[toPascalCase(label)]?.type === 'pattern' && <Error>{label==='Phone'?`Invalid Phone number,Add country code`:`Invalid ${label}`}</Error>:null}
                     {error?error[toPascalCase(label)]?.type === 'minLength' && <Error>Value cant be less than 10 characters</Error>:null}
                 </Column>
