@@ -17,6 +17,9 @@ const Row = styled.div`
     margin-top:16px;
     margin-bottom:16px;
     box-sizing:border-box;
+    @media (max-width:768px){
+        flex-direction:column;
+    }
 `
 
 const Button = styled.button`
@@ -40,6 +43,10 @@ const Button = styled.button`
 
 const Column = styled.div`
     width:70%;
+    flex-direction:column;
+    @media (max-width:768px){
+        width:-webkit-fill-available;
+    }
 `
 const Error = styled.p`
     color:red;
@@ -128,6 +135,10 @@ background:#e2e2e2;
     outline:none;
     border-color:#7f838a;
 }
+@media (max-width:768px){
+    width:-webkit-fill-available;
+}
+
 `
 const List = styled.ul`
 text-align:left;
