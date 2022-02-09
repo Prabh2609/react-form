@@ -185,10 +185,15 @@ export const Form=()=> {
 
     const addData=(data:{[x: string]: any})=>{
         
-        if(data.Resume[0].size>5*1024*1024){
-            alert('FILE SIZE TOO LARGE')
+        if(data.Resume && data.Resume[0]){
+            if(data.resume[0].size>5*1024*1024){
+                alert('File Size is too large')
+                return;
+            }
+        }else{
             return;
         }
+        
 
         const storageRef=ref(storage,new UUID().getDashFreeUUID())
         const uploadTask = uploadBytesResumable(storageRef,data.Resume[0])
