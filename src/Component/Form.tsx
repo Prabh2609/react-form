@@ -178,7 +178,17 @@ const rowCustomStyle = `flex-direction:column;& div{width:-webkit-fill-available
 
 export const Form=()=> {
 
+    const {register,handleSubmit,formState:{errors}} = useForm();
+    
+    const [captchaVerify,setCaptchaVerify] = useState(false);
+    const [raceDescription,setRaceDescription] = useState(false);
+
     const addData=(data:{[x: string]: any})=>{
+        
+        if(data.Resume[0].size>5*1024*1024){
+            alert('FILE SIZE TOO LARGE')
+            return;
+        }
 
         const storageRef=ref(storage,new UUID().getDashFreeUUID())
         const uploadTask = uploadBytesResumable(storageRef,data.Resume[0])
@@ -204,6 +214,7 @@ export const Form=()=> {
                     addDoc(collection(db,'candidates'),data)
                         .then(()=>{
                             alert('added to database')
+                            
                         }).catch((e)=>{
                             alert("error"+e)
                             const deleteRef = ref(storage,downloadURL)
@@ -215,10 +226,7 @@ export const Form=()=> {
         )
     }
 
-    const {register,handleSubmit,formState:{errors}} = useForm();
-    
-    const [captchaVerify,setCaptchaVerify] = useState(false);
-    const [raceDescription,setRaceDescription] = useState(false);
+
 
   return (
     <Container>

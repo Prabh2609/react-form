@@ -157,12 +157,24 @@ export const FormComponent:React.FC<Props> = ({type,label,style,placeholder,regi
 
     const onInputChange=(e:React.FormEvent<HTMLInputElement>)=>{
         if(e.currentTarget.files && e.currentTarget.files[0]){
-            if(e.currentTarget.files[0].size > 5*1024*1024)
-                setResumeError('File size should be less than 5MB')
+            if(e.currentTarget.files[0].size > 5*1024*1024){
+                setResumeError('File size should be less than 5MB');
+                if(error){
+                    error.Resume='size'
+                }
+            }
+                
             else if(e.currentTarget.files[0].type != 'application/pdf')
-                setResumeError('Only pdf format is supported')
+                {setResumeError('Only pdf format is supported')
+                if(error){
+                    error.Resume='type'
+                }
+            }
             else{
                 setResumeError('null')
+                if(error){
+                   delete error.Resume
+                }
             }
             setResumeLabel(e.currentTarget.files[0].name)
         }else{
@@ -181,7 +193,7 @@ export const FormComponent:React.FC<Props> = ({type,label,style,placeholder,regi
                 <Column>
                     <FileUploadWrapper>
                         <UploadButton disabled><Icon className='fas fa-paperclip'/>{resumeLabel}</UploadButton>
-                        <ResumeInput onInput={(e)=>onInputChange(e)} type='file' accept='application/pdf'  {...register?{...register('Resume')}:null} />
+                        <ResumeInput onReset={()=>alert('HI')} onInput={(e)=>onInputChange(e)} type='file' accept='application/pdf'  {...register?{...register('Resume')}:null} />
                         
                     </FileUploadWrapper>
                         {
