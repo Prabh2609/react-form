@@ -32,5 +32,8 @@ const uploadForm=async(d:{[k:string]:any})=>{
         url:'http://localhost:1337/api/forms',
         data:s
     })
-    alert('SUBMITTED SUCCESSFULLY')   
+    if(upload_status.status == 200)
+        alert('SUBMITTED SUCCESSFULLY')
+    else 
+        alert('OOPS !! Something went wrong')
 }
