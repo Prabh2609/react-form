@@ -7,6 +7,7 @@ import { addDoc, collection, doc, documentId, setDoc } from 'firebase/firestore'
 import { db, storage } from '../Utils/Firebase';
 import { deleteObject, getDownloadURL, ref, uploadBytes, uploadBytesResumable } from 'firebase/storage';
 import { UUID } from 'uuid-generator-ts';
+import { uploadData } from '../Utils/Strapi';
 
 
 const Row = styled.div`
@@ -145,6 +146,25 @@ text-align:left;
 list-style:none;
 
 `
+const UploadButton = styled.button`
+border:1px solid #e2e2e2;
+outline:none;
+cursor:pointer;
+color:#515357;
+background-color:#e2e2e2;
+font:normal 400 16px/1.8 Lato;
+letter-spacing:2px;
+line-height:1.3;
+padding:8px 15px;
+width:250px;
+overflow:hidden;
+text-overflow:ellipsis;
+white-space:nowrap;
+height:45px;
+text-transform:uppercase;
+`
+
+
 const ListItem = styled.li`
 
 `
@@ -167,7 +187,31 @@ const RecaptchaContainer=styled.div`
     display:block;
     height:120px;
 `
-
+const Icon = styled.i`
+    color:#515357;
+    margin-right:13px;
+`
+const FileUploadWrapper = styled.div`
+    position:relative;
+    float:left;
+`
+const Required = styled.span`
+    display: inline-block;
+    color: #ff794f;
+    margin-left: 4px;
+    padding-bottom: 0px;
+    position: absolute;
+    top:-12px;
+    font:normal 400 9px/1.8 Lato;
+`
+const ResumeInput=styled.input`
+    width:250px;
+    opacity:0;
+    height:45px;
+    position:absolute;
+    left:0px;
+    cursor:pointer;
+`
 const gender=['Male','Female','Decline to self identify']
 const race=['Hispanic or Latino','White (Not Hispanic or Latino)','Black or African American (Not Hispanic or Latino)','Native Hawaiian or Other Pacific Islander (Not Hispanic or Latino)','Asian (Not Hispanic or Latino)','American Indian or Alaska Native (Not Hispanic or Latino)','Two or More Races (Not Hispanic or Latino)']
 const vet=['I am a veteran','I am not a verteran','Decline to self identify']
@@ -182,6 +226,8 @@ export const Form=()=> {
     
     const [captchaVerify,setCaptchaVerify] = useState(false);
     const [raceDescription,setRaceDescription] = useState(false);
+    const [resumeLabel,setResumeLabel] = useState('Attach Resume/CV')
+    const [resumeError,setResumeError] = useState('null')
 
     const addData=(data:{[x: string]: any})=>{
         
@@ -231,18 +277,45 @@ export const Form=()=> {
         )
     }
 
-
+    const onInputChage=(e:React.FormEvent<HTMLInputElement>)=>{
+        if(e.currentTarget.files && e.currentTarget.files[0]){
+            console.log(e.currentTarget.files[0].name)
+            setResumeLabel(e.currentTarget.files[0].name)
+            
+            if(e.currentTarget.files[0].type !== 'application/pdf')
+                setResumeError('Invalid File Format')
+            else if(e.currentTarget.files[0].size > 5*1024*1024)
+                setResumeError('File size is greater than 5MB')
+            else 
+                setResumeError('null')
+        }else{
+            setResumeError('This field is required')
+        }
+    }
 
   return (
     <Container>
         <FormContainer onSubmit={handleSubmit((data)=>{
-            if(Object.keys(errors).length == 0){                
-                addData(data)
+            if(Object.keys(errors).length == 0 && resumeError==='null'){                
+                uploadData(data)
             }
         })}>
 
             <Heading>Submit your application</Heading>
-                <FormComponent type='file' label='Resume/CV' register={register} error={errors}/>
+                <Row>
+                    <Content>Resume/CV<Required>✱</Required></Content>
+                    <Column>
+                        <FileUploadWrapper>
+                            <UploadButton disabled><Icon className='fas fa-paperclip'/>{resumeLabel}</UploadButton>
+                            <ResumeInput type='file' onInput={(e)=>onInputChage(e)} {...register('Resume')}/>
+                        </FileUploadWrapper>    
+                        {
+                            resumeError !== 'null' && <Error>{resumeError}</Error>
+                        }
+                        
+                    </Column>
+                </Row>
+                {/* <FormComponent type='file' label='Resume/CV' register={register} error={errors}/> */}
                 <FormComponent type='text' label='Full Name' register={register} error={errors}/>
                 <FormComponent type='email' label='Email' register={register} error={errors}/>
                 <FormComponent type='text' label='Phone' register={register} error={errors}/>
